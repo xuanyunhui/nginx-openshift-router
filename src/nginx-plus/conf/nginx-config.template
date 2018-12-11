@@ -245,7 +245,7 @@ http {
       {{ end }}
     {{ end }}
 
-    {{with $value := index $cfg.Annotations "nginx.router.openshift.io/server-snippets"}}
+    {{with $value := index $primaryCfg.Annotations "nginx.router.openshift.io/server-snippets"}}
     {{$value}}
     {{end}}
 
