@@ -245,6 +245,10 @@ http {
       {{ end }}
     {{ end }}
 
+    {{with $value := index $.Ingress.Annotations "nginx.router.openshift.io/server-snippets"}}
+    {{$value}}
+    {{end}}
+
     {{ range $cfgIdx, $cfg := $configs }}
     # this path belongs to the {{ $cfgIdx }} route
     location {{ if eq $cfg.Path ""}}/{{ else }}{{$cfg.Path}}{{ end }} {
@@ -295,6 +299,10 @@ http {
       proxy_set_header X-Forwarded-Host $host;
       proxy_set_header X-Forwarded-Port $server_port;
       proxy_set_header X-Forwarded-Proto $scheme;
+
+      {{with $value := index $.Ingress.Annotations "nginx.router.openshift.io/location-snippets"}}
+      {{$value}}
+      {{end}}
 
         {{ if eq $cfg.TLSTermination "reencrypt" }}
         {{ with $ssl_name := index $cfg.Annotations "nginx.router.openshift.io/proxy_ssl_name" }}
