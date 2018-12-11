@@ -245,7 +245,7 @@ http {
       {{ end }}
     {{ end }}
 
-    {{with $value := index $.Ingress.Annotations "nginx.router.openshift.io/server-snippets"}}
+    {{with $value := index $cfg.Annotations "nginx.router.openshift.io/server-snippets"}}
     {{$value}}
     {{end}}
 
@@ -300,7 +300,7 @@ http {
       proxy_set_header X-Forwarded-Port $server_port;
       proxy_set_header X-Forwarded-Proto $scheme;
 
-      {{with $value := index $.Ingress.Annotations "nginx.router.openshift.io/location-snippets"}}
+      {{with $value := index $cfg.Annotations "nginx.router.openshift.io/location-snippets"}}
       {{$value}}
       {{end}}
 
