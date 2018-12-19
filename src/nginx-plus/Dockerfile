@@ -4,7 +4,7 @@
 # The standard name for this image is openshift/origin-nginx-plus-router
 #
 
-FROM openshift/origin-cli:v3.11.0
+FROM openshift/origin-cli:v4.0.0
 
 # Download certificate and key from the customer portal (https://cs.nginx.com)
 # and copy to the build context
@@ -32,7 +32,12 @@ RUN yum install -y nginx-plus && \
     chmod -R g+w /var/lib/nginx && \
     ln -sf /var/lib/nginx/log/error.log /var/log/nginx/error.log && \
     rm /etc/yum.repos.d/nginx-plus.repo && \
-    rm -rf /etc/ssl/nginx
+    rm -rf /etc/ssl/nginx && \
+    ln -s /dev/stdout /var/lib/nginx/log/access.log && \
+    ln -s /dev/stdout /var/lib/nginx/log/passthrough_access.log && \
+    ln -s /dev/stdout /var/lib/nginx/log/internal_passthrough_access.log && \
+    ln -s /dev/stdout /var/lib/nginx/log/stream_access.log && \
+    ln -s /dev/stderr /var/lib/nginx/log/error.log
 
 COPY . /var/lib/nginx/
 
