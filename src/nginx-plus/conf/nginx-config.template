@@ -12,10 +12,14 @@ worker_processes {{ env "WORKER_PROCESSES" "auto" }};
 {{ with $cpuAffinity := env "WORKER_CPU_AFFINITY" }}
 worker_cpu_affinity {{ $cpuAffinity }};
 {{ end }}
+{{ if isTrue (env "ROUTER_ERROR_LOG_USE_JOURNALD") }}
+error_log stderr;
+{{ else }}
 {{ with $syslogAddress := env "ROUTER_SYSLOG_ADDRESS" }}
 error_log syslog:server={{ $syslogAddress }},facility={{env "ROUTER_LOG_FACILITY" "local1"}} {{ $logLevel }};
 {{ else }}
 error_log  /var/lib/nginx/log/error.log {{ $logLevel }};
+{{ end }}
 {{ end }}
 pid        /var/lib/nginx/run/nginx.pid;
 worker_rlimit_nofile {{ env "WORKER_RLIMIT_NOFILE" "8192" }};
@@ -35,10 +39,14 @@ http {
     '"$request" $body_bytes_sent "$http_referer" '
     '"$http_user_agent" "$http_x_forwarded_for"';
 {{ end }}
+{{ if isTrue (env "ROUTER_ACCESS_LOG_USE_JOURNALD") }}
+access_log stdout;
+{{ else }}
 {{ with $syslogAddress := env "ROUTER_SYSLOG_ADDRESS" }}
   access_log syslog:server={{ $syslogAddress }},facility={{env "ROUTER_LOG_FACILITY" "local1"}},severity={{ $logLevel }} main;
 {{ else }}
   access_log   /var/lib/nginx/log/access.log  main;
+{{ end }}
 {{ end }}
   sendfile     on;
   tcp_nopush   on;
@@ -399,10 +407,14 @@ stream {
   # passthrough routes
   server {
     listen {{ $passthroughPort }}{{ if isTrue (env "ROUTER_USE_PROXY_PROTOCOL") }} proxy_protocol{{ end }};
+    {{ if isTrue (env "ROUTER_PASSTHROUGH_LOG_USE_JOURNALD") }}
+    access_log stdout;
+    {{ else }}
     {{ with $syslogAddress := env "ROUTER_SYSLOG_ADDRESS" }}
     access_log syslog:server={{ $syslogAddress }},facility={{env "ROUTER_LOG_FACILITY" "local1"}},severity={{ $logLevel }} passthrough;
     {{ else }}
     access_log /var/lib/nginx/log/passthrough_access.log passthrough;
+    {{ end }}
     {{ end }}
     status_zone passthrough;
     proxy_pass $dest_passthrough;
@@ -465,11 +477,15 @@ stream {
 
   server {
     listen {{ env "ROUTER_SERVICE_INTERNAL_PASSTHROUGH_PORT" "10447" }} proxy_protocol;
-
+    
+    {{ if isTrue (env "ROUTER_INTERNAL_PASSTHROUGH_LOG_USE_JOURNALD") }}
+    access_log stdout:
+    {{ else }}
     {{ with $syslogAddress := env "ROUTER_SYSLOG_ADDRESS" }}
     access_log syslog:server={{ $syslogAddress }},facility={{env "ROUTER_LOG_FACILITY" "local1"}},severity={{ $logLevel }} internal_passthrough;
     {{ else }}
     access_log /var/lib/nginx/log/internal_passthrough_access.log internal_passthrough;
+    {{ end }}
     {{ end }}
 
     ssl_preread on;
@@ -564,10 +580,14 @@ stream {
               {{ end -}}
             {{ end -}}
           {{ end -}}
+          {{ if isTrue (env "ROUTER_STREAM_LOG_USE_JOURNALD") }}
+    access_log stdout;
+          {{ else }}
           {{ with $syslogAddress := env "ROUTER_SYSLOG_ADDRESS" }}
     access_log syslog:server={{ $syslogAddress }},facility={{env "ROUTER_LOG_FACILITY" "local1"}},severity={{ $logLevel }} stream;
           {{ else }}
     access_log /var/lib/nginx/log/stream_access.log stream;
+          {{ end }}
           {{ end }}
     status_zone {{$streamPort}}_{{$streamProtocol}}_{{$cfg.Name}};
     proxy_pass be_stream_{{$cfg.Namespace}}_{{$cfg.Name}};
